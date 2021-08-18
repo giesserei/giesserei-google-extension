@@ -1,2 +1,4 @@
-# giesserei-google-extension
-A Joomla extension to integrate Google services into the internal Giesserei website
+# giesserei-google-extension - Joomla extension to integrate Google services
+
+This Joomla component extension is used internally at [www.giesserei-gesewo.ch/](https://www.giesserei-gesewo.ch)
+to integrate Google services into the internal website.

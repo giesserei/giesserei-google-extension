@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" version="3.0" method="upgrade">
+
+   <name>Giesserei Google</name>
+   <version>0.1.0</version>
+   <description>Joomla-Component fuer die Integration der Google-Services in die Giesserei-Website</description>
+
+   <author>Christian d'Heureuse</author>
+   <authorEmail>chdh@inventec.ch</authorEmail>
+
+   <files folder="site">
+      <filename>index.html</filename>
+      <filename>app.js</filename>
+      <filename>app.css</filename>
+      <filename>giessereigoogle.php</filename>
+      <folder>views</folder>
+      <folder>php</folder>
+   </files>
+
+   <administration>
+      <menu link='index.php?option=com_giessereigoogle'>Giesserei/Google-Integration</menu>
+      <files folder="admin">
+         <filename>index.html</filename>
+         <filename>giessereigoogle.php</filename>
+         </files>
+   </administration>
+
+</extension>

@@ -1,0 +1,25 @@
+{
+   "compilerOptions": {
+      "allowUnreachableCode": false,
+      "alwaysStrict": true,
+      "lib": ["ES2017", "DOM", "DOM.Iterable", "es2021.string"],
+      "module": "ES6",
+      "moduleResolution": "node",
+      "noFallthroughCasesInSwitch": true,
+      "noImplicitAny": true,
+      "noImplicitOverride": true,
+      "noImplicitReturns": true,
+      "noImplicitThis": true,
+      "noUnusedLocals": true,
+      "noUnusedParameters": true,
+      "outDir": "tempBuild/js",
+      "removeComments": true,
+      "sourceMap": true,
+      "strictFunctionTypes": true,
+      "strictNullChecks": true,
+      "target": "ES2017"
+   },
+   "include": [
+      "src/ts/**/*"
+   ]
+}
