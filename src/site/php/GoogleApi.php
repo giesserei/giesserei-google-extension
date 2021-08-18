@@ -18,7 +18,7 @@ class GoogleApi {
       $this->createGoogleClient($authScopes); }
 
    private function loadGoogleApiClientLibrary() {
-      $homeDir = getenv("HOME");
+      $homeDir = getenv('HOME');
       require_once $homeDir . 'lib/google-api-php-client/vendor/autoload.php'; }
 
    private function createGoogleClient (array $authScopes) {
@@ -45,7 +45,7 @@ class GoogleApi {
       if (!$tokenInfo || !isSet($tokenInfo['access_token'])) {
          $tokenInfo = $this->client->fetchAccessTokenWithAssertion();
          if (!$tokenInfo || !isSet($tokenInfo['access_token'])) {
-            throw new \Exception("Google access token could not be retrieved."); }}
+            throw new \Exception('Google access token could not be retrieved.'); }}
       return $tokenInfo['access_token']; }
 
    // Returns the drive ID or null.
@@ -106,15 +106,15 @@ class GoogleApi {
          'alt'               => 'media',
          'supportsAllDrives' => 'true' ];
       $url = 'https://www.googleapis.com/drive/v3/files/' . urlEncode($fileId) . '?' . http_build_query($parms);
-      $this->download($url, $range); }
+      $this->download($url, $range, true); }
 
    public function downloadDocFile (string $fileId, ?string $range, string $exportMimeType) {
       $parms = [
          'mimeType' => $exportMimeType ];
       $url = 'https://www.googleapis.com/drive/v3/files/' . urlEncode($fileId) . '/export?' . http_build_query($parms);
-      $this->download($url, $range); }
+      $this->download($url, $range, false); }
 
-   private function download (string $url, $range) {
+   private function download (string $url, $range, bool $allowRange) {
       $accessToken = $this->getAccessToken();
       $headers = [
          'Authorization' => 'Bearer ' . $accessToken ];
@@ -125,11 +125,15 @@ class GoogleApi {
          'stream'      => true,
          'headers'     => $headers ];
       $http = new \GuzzleHttp\Client();
-      $response = $http->request("GET", $url, $options);
+      $response = $http->request('GET', $url, $options);
       $statusCode = $response->getStatusCode();
+      $statusReason = $response->getReasonPhrase();
       if ($statusCode >= 400) {
-         throw new \Exception('Google API request failed for "' . $url . '", statusCode=' . $statusCode . ' (' . $response->getReasonPhrase() . ').'); }
+         throw new \Exception('Google API request failed for "' . $url . '", statusCode=' . $statusCode . ' (' . $statusReason . ').'); }
       Utils::stopOutputBuffering();
+      http_response_code($statusCode);
+      if ($allowRange && !$response->hasHeader('Accept-Ranges')) {
+         header('Accept-Ranges: bytes'); }
       $this->forwardDownloadHeaders($response);
       $body = $response->getBody();
       while (!$body->eof()) {
@@ -149,7 +153,8 @@ class GoogleApi {
    private function filterDownloadHeader ($s) {
       switch ($s) {
          case 'Content-Disposition': return false;
-         // case 'Content-Length': return false;
+         // case 'Content-Length':   return false;
+         case 'Set-Cookie':          return false;
          default: return true; }}
 
    private static function quoted (string $s) : string {
