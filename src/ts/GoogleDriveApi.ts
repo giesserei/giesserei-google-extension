@@ -14,10 +14,17 @@ export class GoogleDriveApi {
       const headers = new Headers({
          Accept: "application/json",                       // eslint-disable-line
          Authorization: "Bearer " + this.accessToken });   // eslint-disable-line
-      const rsp = await fetch(url, {headers});
+      let rsp: Response;
+      try {
+         rsp = await fetch(url, {headers}); }
+       catch (err) {
+         throw new Error("Error while accessing Google API (" + err + ").\nDoes your ad blocker block communication with www.googleapis.com?"); }
       if (rsp.status != 200) {
          throw new Error(`Google drive API function "${driveFunctionName}" failed, status=${rsp.status}.`); }
-      return await rsp.json(); }
+      try {
+         return await rsp.json(); }
+       catch (err) {
+         throw new Error("Error while receiving response form Google API. " + err); }}
 
    public async getSharedDrives() {
       if (!this.cachedSharedDrives) {

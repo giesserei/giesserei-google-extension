@@ -7,43 +7,6 @@ var jsParms:        any;
 var contentElement: HTMLElement;
 var driveApi:       GoogleDriveApi;
 
-function encodePathSegment (s: string) : string {
-   // Apache does not allow %2F in the URL path. So we have to encode slash characters differently.
-   return encodeURIComponent(s.replaceAll("/", "~2F")); }
-
-function decodePathSegment (s: string) : string {
-   return decodeURIComponent(s).replace("~2F", "/"); }
-
-// Composes a path string from path segments.
-/*
-function composePath (a: string[]) : string {
-   if (!a?.length) {
-      return "/"; }
-   let s = "";
-   for (const s2 of a) {
-      if (!s2) {
-         continue; }
-      if (s) {
-         s += "/"; }
-      s += encodePathSegment(s2); }
-   return s || "/"; }
-*/
-
-// Splits a path string into path segments.
-function splitPath (s: string) : string[] {
-   if (!s || s == "/") {
-      return []; }
-   const a = [];
-   let p = 0;
-   while (p < s.length) {
-      const p1 = p;
-      while (p < s.length && s[p] != "/") {
-         p++; }
-      if (p > p1) {
-         a.push(decodePathSegment(s.substring(p1, p))); }
-      p++; }
-   return a; }
-
 function genAbsDrivePath (path: string) : string {
    return Utils.joinPath(jsParms.driveUrlBase, path); }
 
@@ -121,7 +84,7 @@ function getFormatCode (mimeType: string) : string {
       default:                return mimeType; }}          // fallback
 
 function renderBreadcrumbs (path: string) : HTMLElement {
-   const pathSegs = splitPath(path);
+   const pathSegs = Utils.splitPath(path);
    const breadcrumbsElement = document.createElement("div");
    breadcrumbsElement.className = "gge_breadcrumbs";
    for (let i = -1; i < pathSegs.length; i++) {
@@ -152,7 +115,7 @@ function renderDirectoryList (dirPath: string, dirList: any[], isDriveList: bool
       const relPath =
             (dirPath.startsWith("/") ? dirPath.substring(1) : dirPath) +
             (dirPath && !dirPath.endsWith("/") ? "/" : "") +
-            encodePathSegment(e.name) +
+            Utils.encodePathSegment(e.name) +
             ((isDriveList || isMimeTypeDirectory(e.mimeType)) ? "/" : "");
       const mimeType = isDriveList ? "application/vnd.google-apps.folder" : e.mimeType;
       //
@@ -209,7 +172,7 @@ async function listDirectoryWithId (dirId: string, driveId: string, dirPath: str
    renderDirectory(dirPath, files, false); }
 
 async function listDirectory (path: string) {
-   const pathSegs = splitPath(path);
+   const pathSegs = Utils.splitPath(path);
    if (pathSegs.length == 0) {                             // root directory
       const drives = await driveApi.getSharedDrives();
       renderDirectory("", drives, true); }
@@ -238,8 +201,8 @@ async function breadcrumb_click (event: MouseEvent) {
    event.preventDefault();
    const path = (<HTMLElement>event.target).dataset.path ?? "";
    pushHistoryState(path);
-   window.scrollTo(0, 0);
-   await listDirectory(path); }
+   await listDirectory(path);
+   window.scrollTo(0, 0); }
 
 async function directoryEntry_click (event: MouseEvent) {
    if (!isInternalClick(event)) {
@@ -253,8 +216,8 @@ async function directoryEntry_click (event: MouseEvent) {
       return; }                                            // File open/download is currently done server-side.
    event.preventDefault();
    pushHistoryState(path);
-   window.scrollTo(0, 0);
-   await listDirectoryWithId(fileId, driveId, path); }
+   await listDirectoryWithId(fileId, driveId, path);
+   window.scrollTo(0, 0); }
 
 export async function startup (jsParmsP: Object) {
    jsParms = jsParmsP;
