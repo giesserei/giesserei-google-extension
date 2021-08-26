@@ -4,7 +4,7 @@ defined('_JEXEC') or die;
 
 class Utils {
 
-   public static function getUrlParm (string $parmName, $defaultValue = null, string $filter = 'STRING') {
+   public static function getUrlParm (string $parmName, mixed $defaultValue = null, string $filter = 'STRING') : mixed {
       $app = \JFactory::getApplication();
       $input = $app->input;
       return $input->get($parmName, $defaultValue, $filter); }
@@ -84,7 +84,7 @@ class Utils {
          case 'html': return 'text/html';
          default:     return $formatCode; }}               // fallback
 
-   public static function stopOutputBuffering() {
+   public static function stopOutputBuffering() : void {
       while (ob_get_level()) {
          ob_end_clean(); }}
 

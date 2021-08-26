@@ -1,0 +1,11 @@
+parameters:
+   level: 8
+   paths:
+      - /src/site/php
+   checkMissingIterableValueType: false
+   ignoreErrors:
+      - '#^Access to an undefined property object::#'
+      - '#^Call to an undefined method object::#'
+      - '#^Instantiated class [\w\\]+ not found.$#'
+      - '#^Call to method [\w]+\(\) on an unknown class #'
+      - '#^Call to static method [\w]+\(\) on an unknown class #'

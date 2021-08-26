@@ -17,10 +17,12 @@ class Main {
       $this->readConfigFile();
       $this->staticUrlBase = '/' . \Joomla\CMS\Uri\Uri::root(true) . 'components/' . self::componentName . '/'; }
 
-   private function readConfigFile() {
+   private function readConfigFile() : void {
       $homeDir = getenv("HOME");
       $configFileName = $homeDir . '/etc/giessereiGoogleJoomlaExtension.json';
       $configFileText = file_get_contents($configFileName);
+      if ($configFileText === false) {
+         throw new \Exception('Error while reading config file.'); }
       $this->config = json_decode($configFileText, true);
       if (!$this->config) {
          throw new \Exception('Unable to decode config file.'); }}
@@ -30,7 +32,7 @@ class Main {
          $this->googleApi = new GoogleApi(GoogleApi::authScopesDriveReadOnly, $this->config); }
       return $this->googleApi; }
 
-   public function processSiteRequest() {
+   public function processSiteRequest() : void {
       $viewName = $this->getViewName();
       switch ($viewName) {
          case 'drive': {
@@ -39,7 +41,7 @@ class Main {
          default: {
             throw new \Exception("Unsupported view name \"$viewName\"-"); }}}
 
-   private function processDriveRequest() {
+   private function processDriveRequest() : void {
       $this->verifyUserIsLoggedIn();
       $path = Utils::getUrlPathParm();
       if (str_ends_with($path, '/')) {
@@ -47,7 +49,7 @@ class Main {
        else {
          $this->downloadFile($path); }}
 
-   private function generateDirectoryPage (string $path) {
+   private function generateDirectoryPage (string $path) : void {
       $googleApi = $this->getGoogleApi();
       $accessToken = $googleApi->getAccessToken();
       $jsParms = [
@@ -60,14 +62,14 @@ class Main {
       $this->prepareJoomlaDocumentObject($jsParms);
       echo '<div id="gge_content">(wird geladen)</div>'; }
 
-   private function prepareJoomlaDocumentObject (array $jsParms) {
+   private function prepareJoomlaDocumentObject (array $jsParms) : void {
       $app = \JFactory::getApplication();
       $document = $app->getDocument();
       $document->addStyleSheet($this->staticUrlBase . 'app.css');
       $document->addScript($this->staticUrlBase . 'app.js');
       $document->addScriptOptions(self::componentName, $jsParms); }
 
-   private function downloadFile (string $path) {
+   private function downloadFile (string $path) : void {
       $googleApi = $this->getGoogleApi();
       $pathSegs =& Utils::splitPath($path);
       $file = $googleApi->findPath($pathSegs);
@@ -90,7 +92,7 @@ class Main {
       flush();
       exit(0); }
 
-   private function verifyUserIsLoggedIn() {
+   private function verifyUserIsLoggedIn() : void {
       $user = \JFactory::getUser();
       if ($user->guest) {
          throw new \Exception('Joomla user is not logged in.'); }}

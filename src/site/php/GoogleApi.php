@@ -17,11 +17,11 @@ class GoogleApi {
       $this->loadGoogleApiClientLibrary();
       $this->createGoogleClient($authScopes); }
 
-   private function loadGoogleApiClientLibrary() {
+   private function loadGoogleApiClientLibrary() : void {
       $homeDir = getenv('HOME');
       require_once $homeDir . 'lib/google-api-php-client/vendor/autoload.php'; }
 
-   private function createGoogleClient (array $authScopes) {
+   private function createGoogleClient (array $authScopes) : void {
       $googleApiKey = $this->config['googleApiKey'];
       $impersonationAccount = $this->config['defaultImpersonationAccount'];
       $clientConfig = [
@@ -40,7 +40,7 @@ class GoogleApi {
          $this->driveService = new \Google_Service_Drive($this->client); }
       return $this->driveService; }
 
-   public function getAccessToken() {
+   public function getAccessToken() : string {
       $tokenInfo = $this->client->getAccessToken();
       if (!$tokenInfo || !isSet($tokenInfo['access_token'])) {
          $tokenInfo = $this->client->fetchAccessTokenWithAssertion();
@@ -94,6 +94,7 @@ class GoogleApi {
             'id'       => $driveId,                        // root folder ID is drive ID
             'mimeType' => 'application/vnd.google-apps.folder' ]; }
       $dirId = $driveId;
+      $file = null;
       for ($i = 1; $i < count($path); $i++) {
          $file = $this->findFileByName($path[$i], $dirId, $driveId);
          if (!$file) {
@@ -101,20 +102,20 @@ class GoogleApi {
          $dirId = $file['id']; }
       return $file; }
 
-   public function downloadDriveFile (string $fileId, ?string $range) {
+   public function downloadDriveFile (string $fileId, ?string $range) : void {
       $parms = [
          'alt'               => 'media',
          'supportsAllDrives' => 'true' ];
       $url = 'https://www.googleapis.com/drive/v3/files/' . urlEncode($fileId) . '?' . http_build_query($parms);
       $this->download($url, $range, true); }
 
-   public function downloadDocFile (string $fileId, ?string $range, string $exportMimeType) {
+   public function downloadDocFile (string $fileId, ?string $range, string $exportMimeType) : void {
       $parms = [
          'mimeType' => $exportMimeType ];
       $url = 'https://www.googleapis.com/drive/v3/files/' . urlEncode($fileId) . '/export?' . http_build_query($parms);
       $this->download($url, $range, false); }
 
-   private function download (string $url, $range, bool $allowRange) {
+   private function download (string $url, ?string $range, bool $allowRange) : void {
       $accessToken = $this->getAccessToken();
       $headers = [
          'Authorization' => 'Bearer ' . $accessToken ];
@@ -139,18 +140,18 @@ class GoogleApi {
       while (!$body->eof()) {
          $data = $body->read(0x4000);
          if ($data === false) {
-            throw new Exception('Timeout while reading from file download stream.'); }
+            throw new \Exception('Timeout while reading from file download stream.'); }
          echo $data; }
       $body->close(); }
 
-   private function forwardDownloadHeaders ($response) {
+   private function forwardDownloadHeaders (object $response) : void {
       $headers = $response->getHeaders();
       foreach ($headers as $name => $values) {
          if ($this->filterDownloadHeader($name)) {
             foreach ($values as $value) {
                header($name . ': ' . $value, false); }}}}
 
-   private function filterDownloadHeader ($s) {
+   private function filterDownloadHeader (string $s) : bool {
       switch ($s) {
          case 'Content-Disposition': return false;
          // case 'Content-Length':   return false;
