@@ -39,8 +39,8 @@ class Main {
       try {
          $accessTokenCacheFile->open($accessTokenCacheFileName);
          $oldTokenInfo = $accessTokenCacheFile->loadJson();
-         $remainingSecs = (!$oldTokenInfo) ? 0 : ($oldTokenInfo['created'] ?? 0) + ($oldTokenInfo['expires_in'] ?? 0) - time();
-         if ($remainingSecs > 900 && $remainingSecs < 6000) {
+         $remainingSecs = GoogleApi::getAccessTokenRemainingSecs($oldTokenInfo);
+         if ($remainingSecs > 900 && $remainingSecs < 6000) {                  // note: in the web browser app, the minimum acceptable remaining time must be significantly lower than here
             $this->googleApi->setAccessTokenInfo($oldTokenInfo);
             return; }
          $newTokenInfo = $this->googleApi->getAccessTokenInfo();
@@ -78,14 +78,17 @@ class Main {
 
    private function generateDirectoryPage (string $path) : void {
       $googleApi = $this->getGoogleApi();
-      $accessToken = $googleApi->getAccessToken();
+      $accessTokenInfo = $googleApi->getAccessTokenInfo();
+      $accessToken = $accessTokenInfo['access_token'];
+      $remainingSecs = GoogleApi::getAccessTokenRemainingSecs($accessTokenInfo);
       $jsParms = [
          'view' => 'driveListing',
          'path' => $path,
          'rootFolderDisplayName' => $this->config['rootFolderDisplayName'],
          'driveUrlBase' => $this->config['driveUrlBase'],
          'staticUrlBase' => $this->staticUrlBase,
-         'googleAccessToken' => $accessToken ];
+         'googleAccessToken' => $accessToken,
+         'googleAccessTokenSecs' => $remainingSecs ];
       $this->prepareJoomlaDocumentObject($jsParms);
       echo '<div id="gge_content">(wird geladen)</div>'; }
 
