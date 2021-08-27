@@ -3,6 +3,7 @@ namespace Giesserei\Google;
 defined('_JEXEC') or die;
 
 require_once __DIR__ . '/GoogleApi.php';
+require_once __DIR__ . '/LockedFile.php';
 require_once __DIR__ . '/Utils.php';
 
 class Main {
@@ -10,11 +11,13 @@ class Main {
    private const componentName = 'com_giessereigoogle';
 
    private array   $config;                                // config file content
+   private ?string $cacheDir;
    private string  $staticUrlBase;                         // URL base for static files
    private ?object $googleApi = null;
 
    public function __construct() {
       $this->readConfigFile();
+      $this->cacheDir = $this->config['cacheDir'] ?? null;
       $this->staticUrlBase = '/' . \Joomla\CMS\Uri\Uri::root(true) . 'components/' . self::componentName . '/'; }
 
    private function readConfigFile() : void {
@@ -27,9 +30,33 @@ class Main {
       if (!$this->config) {
          throw new \Exception('Unable to decode config file.'); }}
 
+   private function performAccessTokenCaching (string $accessTokenCacheName) : void {
+      if (!$this->cacheDir) {
+         return; }
+      assert(!!$this->googleApi);                                              // (for linter)
+      $accessTokenCacheFileName = $this->cacheDir . '/' . self::componentName . '_accessToken_' . $accessTokenCacheName . '.json';
+      $accessTokenCacheFile = new LockedFile();
+      try {
+         $accessTokenCacheFile->open($accessTokenCacheFileName);
+         $oldTokenInfo = $accessTokenCacheFile->loadJson();
+         $remainingSecs = (!$oldTokenInfo) ? 0 : ($oldTokenInfo['created'] ?? 0) + ($oldTokenInfo['expires_in'] ?? 0) - time();
+         if ($remainingSecs > 900 && $remainingSecs < 6000) {
+            $this->googleApi->setAccessTokenInfo($oldTokenInfo);
+            return; }
+         $newTokenInfo = $this->googleApi->getAccessTokenInfo();
+         $accessTokenCacheFile->storeJson($newTokenInfo); }
+       finally {
+         $accessTokenCacheFile->close(); }}
+
    private function getGoogleApi() : object {
-      if (!$this->googleApi) {
-         $this->googleApi = new GoogleApi(GoogleApi::authScopesDriveReadOnly, $this->config); }
+      if ($this->googleApi) {
+         return $this->googleApi; }
+      // Provisional logic only for read-only access to Google Drive.
+      $authScopes = GoogleApi::authScopesDriveReadOnly;
+      $accessTokenCacheName = 'DriveReadOnly';
+      $this->googleApi = new GoogleApi($authScopes, $this->config);
+      $this->performAccessTokenCaching($accessTokenCacheName);
+      assert(!!$this->googleApi);                                              // (for linter)
       return $this->googleApi; }
 
    public function processSiteRequest() : void {

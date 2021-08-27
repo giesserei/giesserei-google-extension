@@ -35,18 +35,28 @@ class GoogleApi {
          'application_name'  => 'Giesserei Google Joomla extension' ];
       $this->client = new \Google\Client($clientConfig); }
 
-   private function getDriveService() : object {
-      if (!$this->driveService) {
-         $this->driveService = new \Google_Service_Drive($this->client); }
-      return $this->driveService; }
+   public function setAccessTokenInfo (array $tokenInfo) : void {
+      $this->client->setAccessToken($tokenInfo); }
 
-   public function getAccessToken() : string {
+   // Returns ['access_token', 'expires_in', 'created'].
+   public function getAccessTokenInfo() : array {
       $tokenInfo = $this->client->getAccessToken();
       if (!$tokenInfo || !isSet($tokenInfo['access_token'])) {
          $tokenInfo = $this->client->fetchAccessTokenWithAssertion();
          if (!$tokenInfo || !isSet($tokenInfo['access_token'])) {
             throw new \Exception('Google access token could not be retrieved.'); }}
+      return $tokenInfo; }
+
+   public function getAccessToken() : string {
+      $tokenInfo = $this->getAccessTokenInfo();
       return $tokenInfo['access_token']; }
+
+   //--- Drive API -------------------------------------------------------------
+
+   private function getDriveService() : object {
+      if (!$this->driveService) {
+         $this->driveService = new \Google\Service\Drive($this->client); }
+      return $this->driveService; }
 
    // Returns the drive ID or null.
    // See: https://stackoverflow.com/questions/68794842, https://developers.google.com/drive/api/v3/search-shareddrives
