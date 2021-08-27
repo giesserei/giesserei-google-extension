@@ -6,7 +6,7 @@
    color: #333; }
 
 .gge_breadcrumbs {
-   margin-top: 7px;
+   margin-top: 8px;
    font-size: 17px;
    font-weight: bold;
    display: flex; }
@@ -20,29 +20,46 @@
    margin-left: 10px; }
 
 .gge_dirList {
-   margin-top: 7px; }
+   margin-top: 9px; }
 
 .gge_dirEntry {
    display: flex;
-   align-items: center;
-   min-height: 26px; }
+   align-items: stretch;
+   min-height: 29px; }
 
 .gge_dirEntryLink {
+   flex: 1 0 300px;
    display: flex; }
 
 .gge_dirEntryIcon {
    display: block;
    margin-top: 2px;
    height: 22px;
-   width: 22px; }
+   flex: 0 0 22px; }
 
 .gge_dirEntryName {
-   margin-top: 4px;
-   margin-left: 8px; }
+   margin-top: 3px;
+   margin-left: 8px;
+   border-bottom: 1px solid #eee;
+   flex: 1 1 200px; }
+.gge_dirEntry:last-child .gge_dirEntryName {
+   border-bottom: none; }
+
+.gge_dirEmtryTime {
+   flex: 0 0 130px;
+   margin-top: 3px;
+   border-bottom: 1px solid #eee;
+   text-align: right; }
+.gge_dirEntry:last-child .gge_dirEmtryTime {
+   border-bottom: none; }
 
 .gge_dirEntryRightButtons {
-   margin-left: auto;
-   display: flex; }
+   flex: 0 0 117px;
+   display: flex;
+   border-bottom: 1px solid #eee;
+   justify-content: flex-end; }
+.gge_dirEntry:last-child .gge_dirEntryRightButtons {
+   border-bottom: none; }
 
 .gge_dirEntryRightButtons a {
    margin-left: 8px; }

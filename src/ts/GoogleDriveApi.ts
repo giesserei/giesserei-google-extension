@@ -63,7 +63,7 @@ export class GoogleDriveApi {
          corpora: "drive",
          driveId,
          q: `'${dirId}' in parents and trashed = false`,
-         fields: "files(id, name, mimeType, driveId, webViewLink)",
+         fields: "files(id, name, mimeType, driveId, webViewLink, modifiedTime)",
          orderBy: "folder, name_natural",
          includeItemsFromAllDrives: "true",
          supportsAllDrives: "true" };

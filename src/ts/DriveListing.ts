@@ -108,6 +108,14 @@ function renderBreadcrumbs (path: string) : HTMLElement {
       breadcrumbElement.addEventListener("click", <any>breadcrumb_click); }
    return breadcrumbsElement; }
 
+function formatDateTime (s: string) : string {
+   if (!s) {
+      return ""; }
+   const d = new Date(s);
+   return fmt2(d.getDate()) + "." + fmt2((d.getMonth() + 1)) + "." + d.getFullYear() + " " + fmt2(d.getHours()) + ":" + fmt2(d.getMinutes());
+   function fmt2 (i: number) : string {
+      return String(i).padStart(2, "0"); }}
+
 function renderDirectoryList (dirPath: string, dirList: any[], isDriveList: boolean) : HTMLElement {
    const dirListElement = document.createElement("div");
    dirListElement.className = "gge_dirList";
@@ -118,34 +126,39 @@ function renderDirectoryList (dirPath: string, dirList: any[], isDriveList: bool
             Utils.encodePathSegment(e.name) +
             ((isDriveList || isMimeTypeDirectory(e.mimeType)) ? "/" : "");
       const mimeType = isDriveList ? "application/vnd.google-apps.folder" : e.mimeType;
-      //
+      // directory entry / row
       const entryElement = document.createElement("div");
       entryElement.className = "gge_dirEntry";
       entryElement.dataset.mimeType = mimeType;
       entryElement.dataset.fileId = e.id;
       entryElement.dataset.driveId = isDriveList ? e.id : e.driveId;
       entryElement.dataset.path = relPath;
-      //
+      // entry link
       const entryLinkElement = document.createElement("a");
       entryElement.appendChild(entryLinkElement);
       entryLinkElement.className = "gge_dirEntryLink";
       entryLinkElement.href = genAbsDrivePath(relPath);
       entryLinkElement.addEventListener("click", <any>directoryEntry_click);
-      //
+      // main icon
       const entryIconElement = document.createElement("img");
       entryLinkElement.appendChild(entryIconElement);
       entryIconElement.className = "gge_dirEntryIcon";
       entryIconElement.src = jsParms.staticUrlBase + "images/" + getIconName(mimeType);
-      //
+      // name
       const nameElement = document.createElement("div");
       entryLinkElement.appendChild(nameElement);
       nameElement.className = "gge_dirEntryName";
       nameElement.textContent = e.name;
-      //
+      // time (modifiedTime)
+      const timeElement = document.createElement("div");
+      entryElement.appendChild(timeElement);
+      timeElement.className = "gge_dirEmtryTime";
+      timeElement.textContent = formatDateTime(e.modifiedTime);
+      // buttons at the right
       const rightButtonsElement = document.createElement("div");
       entryElement.appendChild(rightButtonsElement);
       rightButtonsElement.className = "gge_dirEntryRightButtons";
-      //
+      // alternate format links
       const altFormats = getAlternateFormats(mimeType);
       for (const altFormat of altFormats) {
          const formatName = getFormatName(altFormat);
@@ -184,6 +197,12 @@ async function listDirectory (path: string) {
           throw new Error(`File object "${path}" is not a directory.`); }
        await listDirectoryWithId(dir.id, dir.driveId, path); }}
 
+function isGoogleAccessTokenValid() : boolean {
+   if (!jsParms) {
+      return false; }
+   const remainingSecs = (jsParms.googleAccessTokenSecs ?? 0) - performance.now() / 1000;
+   return remainingSecs > 180; }
+
 function isInternalClick (event: MouseEvent) : boolean {
    return !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && event.button == 0 && !!event.target; }
 
@@ -193,10 +212,13 @@ function pushHistoryState (path: string) {
 
 async function popHistoryState (event: PopStateEvent) {
    const path = event.state ?? "";
+   if (!isGoogleAccessTokenValid()) {
+      window.location.reload();
+      return; }
    await listDirectory(path); }
 
 async function breadcrumb_click (event: MouseEvent) {
-   if (!isInternalClick(event)) {
+   if (!isInternalClick(event) || !isGoogleAccessTokenValid()) {
       return; }
    event.preventDefault();
    const path = (<HTMLElement>event.target).dataset.path ?? "";
@@ -205,7 +227,7 @@ async function breadcrumb_click (event: MouseEvent) {
    window.scrollTo(0, 0); }
 
 async function directoryEntry_click (event: MouseEvent) {
-   if (!isInternalClick(event)) {
+   if (!isInternalClick(event) || !isGoogleAccessTokenValid()) {
       return; }
    const entryElement = <HTMLElement>((<HTMLElement>event.target).closest(".gge_dirEntry"))!;
    const mimeType = entryElement.dataset.mimeType!;
