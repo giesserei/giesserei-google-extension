@@ -40,10 +40,10 @@ class Utils {
 
    // Splits a path string into path segments.
    public static function & splitPath (string $s) : array {
-      if (!$s || $s == '/') {
-         return []; }
-      $sLen = strlen($s);
       $a = [];
+      if (!$s || $s == '/') {
+         return $a; }
+      $sLen = strlen($s);
       $p = 0;
       while ($p < $sLen) {
          $p1 = $p;
@@ -85,7 +85,9 @@ class Utils {
          default:     return $formatCode; }}               // fallback
 
    public static function stopOutputBuffering() : void {
-      while (ob_get_level()) {
+      while (true) {
+         if (!ob_get_level()) {
+            break; }
          ob_end_clean(); }}
 
    }

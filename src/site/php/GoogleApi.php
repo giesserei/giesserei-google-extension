@@ -23,7 +23,7 @@ class GoogleApi {
 
    private function createGoogleClient (array $authScopes) : void {
       $googleApiKey = $this->config['googleApiKey'];
-      $impersonationAccount = $this->config['defaultImpersonationAccount'];
+      $impersonationAccount = (string)$this->config['defaultImpersonationAccount'];
       $clientConfig = [
          'use_application_default_credentials' => true,
          'client_id'         => $googleApiKey['client_id'],

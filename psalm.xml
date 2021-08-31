@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<psalm
+      errorLevel="1"
+      skipChecksOnUnresolvableIncludes="true"
+      reportMixedIssues="false"
+   >
+   <projectFiles>
+      <directory name="src/site/php"/>
+   </projectFiles>
+   <issueHandlers>
+      <PropertyNotSetInConstructor errorLevel="suppress"/>
+      <UnresolvableInclude errorLevel="suppress"/>
+      <UndefinedClass errorLevel="suppress"/>
+   </issueHandlers>
+</psalm>

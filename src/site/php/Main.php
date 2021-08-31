@@ -56,7 +56,7 @@ class Main {
       $accessTokenCacheName = 'DriveReadOnly';
       $this->googleApi = new GoogleApi($authScopes, $this->config);
       $this->performAccessTokenCaching($accessTokenCacheName);
-      assert(!!$this->googleApi);                                              // (for linter)
+      assert(!!$this->googleApi);                                              // (for PHPStan linter)
       return $this->googleApi; }
 
    public function processSiteRequest() : void {
