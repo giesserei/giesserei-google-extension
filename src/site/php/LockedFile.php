@@ -62,6 +62,7 @@ class LockedFile {
 
    public function storeJson (mixed $x) : void {
       $json = json_encode($x, flags: JSON_THROW_ON_ERROR);
+      assert($json !== false);
       $this->store($json); }
 
    }

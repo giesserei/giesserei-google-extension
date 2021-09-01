@@ -51,7 +51,7 @@ class GoogleApi {
       $tokenInfo = $this->getAccessTokenInfo();
       return $tokenInfo['access_token']; }
 
-   public static function getAccessTokenRemainingSecs (?array $tokenInfo) : int {
+   public static function getAccessTokenRemainingSecs (?array $tokenInfo) : float {
       if (!$tokenInfo) {
          return -1; }
       return ($tokenInfo['created'] ?? -1) + ($tokenInfo['expires_in'] ?? -1) - time(); }
