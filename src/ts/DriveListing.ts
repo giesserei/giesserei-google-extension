@@ -102,10 +102,11 @@ function renderBreadcrumbs (path: string) : HTMLElement {
          breadcrumbElement.href = jsParms.driveUrlBase; }
        else {
          breadcrumbElement.textContent = pathSegs[i];
-         const relPath = pathSegs.slice(0, i + 1).join("/") + "/";
+         const relPathSegs = pathSegs.slice(0, i + 1);
+         const relPath = Utils.composePath(relPathSegs) + "/";
          breadcrumbElement.href = genAbsDrivePath(relPath);
          breadcrumbElement.dataset.path = relPath; }
-      breadcrumbElement.addEventListener("click", <any>breadcrumb_click); }
+      breadcrumbElement.addEventListener("click", (event: Event) => Utils.catchError(breadcrumb_click, event)); }
    return breadcrumbsElement; }
 
 function formatDateTime (s: string) : string {
@@ -125,20 +126,20 @@ function renderDirectoryList (dirPath: string, dirList: any[], isDriveList: bool
             (dirPath && !dirPath.endsWith("/") ? "/" : "") +
             Utils.encodePathSegment(e.name) +
             ((isDriveList || isMimeTypeDirectory(e.mimeType)) ? "/" : "");
-      const mimeType = isDriveList ? "application/vnd.google-apps.folder" : e.mimeType;
+      const isShortcut = !isDriveList && e.mimeType == "application/vnd.google-apps.shortcut";
+      const mimeType = isDriveList ? "application/vnd.google-apps.folder" : isShortcut ? e.shortcutDetails.targetMimeType : e.mimeType;
       // directory entry / row
       const entryElement = document.createElement("div");
       entryElement.className = "gge_dirEntry";
       entryElement.dataset.mimeType = mimeType;
-      entryElement.dataset.fileId = e.id;
-      entryElement.dataset.driveId = isDriveList ? e.id : e.driveId;
+      entryElement.dataset.fileId = isShortcut ? e.shortcutDetails.targetId : e.id;
       entryElement.dataset.path = relPath;
       // entry link
       const entryLinkElement = document.createElement("a");
       entryElement.appendChild(entryLinkElement);
       entryLinkElement.className = "gge_dirEntryLink";
       entryLinkElement.href = genAbsDrivePath(relPath);
-      entryLinkElement.addEventListener("click", <any>directoryEntry_click);
+      entryLinkElement.addEventListener("click", (event: Event) => Utils.catchError(directoryEntry_click, event));
       // main icon
       const entryIconElement = document.createElement("img");
       entryLinkElement.appendChild(entryIconElement);
@@ -153,7 +154,7 @@ function renderDirectoryList (dirPath: string, dirList: any[], isDriveList: bool
       const timeElement = document.createElement("div");
       entryElement.appendChild(timeElement);
       timeElement.className = "gge_dirEmtryTime";
-      timeElement.textContent = formatDateTime(e.modifiedTime);
+      timeElement.textContent = isShortcut ? "" : formatDateTime(e.modifiedTime);
       // buttons at the right
       const rightButtonsElement = document.createElement("div");
       entryElement.appendChild(rightButtonsElement);
@@ -178,10 +179,10 @@ function renderDirectoryList (dirPath: string, dirList: any[], isDriveList: bool
 function renderDirectory (dirPath: string, dirList: any[], isDriveList: boolean) {
    const dirListElement = renderDirectoryList(dirPath, dirList, isDriveList);
    const breadcrumbsElement = renderBreadcrumbs(dirPath);
-   (<any>contentElement).replaceChildren(breadcrumbsElement, dirListElement); }   // TODO: <any> enfernen, TypeDef für replaceChildren() kommt im TypeScript 4.4
+   contentElement.replaceChildren(breadcrumbsElement, dirListElement); }
 
-async function listDirectoryWithId (dirId: string, driveId: string, dirPath: string) {
-   const files = await driveApi.getDirectoryFiles(dirId, driveId);
+async function listDirectoryWithId (dirId: string, dirPath: string) {
+   const files = await driveApi.getDirectoryFiles(dirId);
    renderDirectory(dirPath, files, false); }
 
 async function listDirectory (path: string) {
@@ -190,12 +191,15 @@ async function listDirectory (path: string) {
       const drives = await driveApi.getSharedDrives();
       renderDirectory("", drives, true); }
     else {
-       const dir = await driveApi.findPath(pathSegs);
-       if (!dir) {
-          throw new Error(`Directory "${path}" not found.`); }
-       if (!isMimeTypeDirectory(dir.mimeType)) {
-          throw new Error(`File object "${path}" is not a directory.`); }
-       await listDirectoryWithId(dir.id, dir.driveId, path); }}
+      const dir = await driveApi.findPath(pathSegs);
+      if (!dir) {
+         throw new Error(`Directory "${path}" not found.`); }
+      const isShortcut = dir.mimeType == "application/vnd.google-apps.shortcut";
+      const mimeType = isShortcut ? dir.shortcutDetails.targetMimeType : dir.mimeType;
+      if (!isMimeTypeDirectory(mimeType)) {
+         throw new Error(`File object "${path}" is not a directory.`); }
+      const dirId = isShortcut ? dir.shortcutDetails.targetId : dir.id;
+      await listDirectoryWithId(dirId, path); }}
 
 function isGoogleAccessTokenValid() : boolean {
    if (!jsParms) {
@@ -232,13 +236,12 @@ async function directoryEntry_click (event: MouseEvent) {
    const entryElement = <HTMLElement>((<HTMLElement>event.target).closest(".gge_dirEntry"))!;
    const mimeType = entryElement.dataset.mimeType!;
    const fileId = entryElement.dataset.fileId!;
-   const driveId = entryElement.dataset.driveId!;
    const path = entryElement.dataset.path!;
    if (!isMimeTypeDirectory(mimeType)) {
       return; }                                            // File open/download is currently done server-side.
    event.preventDefault();
    pushHistoryState(path);
-   await listDirectoryWithId(fileId, driveId, path);
+   await listDirectoryWithId(fileId, path);
    window.scrollTo(0, 0); }
 
 export async function startup (jsParmsP: Object) {

@@ -62,3 +62,15 @@ export function renderImgLink (className: string, imgUrl: string, linkUrl: strin
       imgElement.title = title; }
    //
    return anchorElement; }
+
+export function catchError (f: Function, ...args: any[]) {
+   void catchErrorAsync(f, ...args); }
+
+async function catchErrorAsync(f: Function, ...args: any[]) {
+   try {
+      const r = f(...args);
+      if (r instanceof Promise) {
+         await r; }}
+    catch (error) {
+      console.log(error);
+      alert("Error: " + error); }}

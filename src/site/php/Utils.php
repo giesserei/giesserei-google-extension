@@ -57,7 +57,7 @@ class Utils {
    public static function isMimeTypeDirectory (string $mimeType) : bool {
       return $mimeType == 'application/vnd.google-apps.folder'; }
 
-   public static function isMimeTypeRedirect (string $mimeType) : bool {
+   public static function isMimeTypeShortcut (string $mimeType) : bool {
       return $mimeType == 'application/vnd.google-apps.shortcut'; }
 
    public static function isMimeTypeGoogleDoc (string $mimeType) : bool {

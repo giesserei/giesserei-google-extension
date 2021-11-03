@@ -79,13 +79,12 @@ class GoogleApi {
       return null; }
 
    // Returns null if the file is not found.
-   private function findFileByName (string $fileName, string $dirId, string $driveId) : ?array {
+   private function findFileByName (string $fileName, string $dirId) : ?array {
       $driveService = $this->getDriveService();
       $parms = [
-         'corpora'                   => 'drive',
-         'driveId'                   => $driveId,
+         'corpora'                   => 'allDrives',
          'q'                         => 'name = ' . self::quoted($fileName) . ' and ' . self::quoted($dirId) . ' in parents and trashed = false',
-         'fields'                    => 'files(id, mimeType)',
+         'fields'                    => 'files(id, mimeType, shortcutDetails/targetId, shortcutDetails/targetMimeType)',
          'includeItemsFromAllDrives' => 'true',
          'supportsAllDrives'         => 'true' ];
       $result = $driveService->files->listFiles($parms);
@@ -93,7 +92,8 @@ class GoogleApi {
       if (!count($files)) {
          return null; }
       $file = $files[0];
-      return ['id' => $file->getId(), 'mimeType' => $file->getMimeType()]; }
+      $shortcutDetails = $file->getShortcutDetails();
+      return ['id' => $file->getId(), 'mimeType' => $file->getMimeType(), 'targetId' => $shortcutDetails?->getTargetId(), 'targetMimeType' => $shortcutDetails?->getTargetMimeType() ]; }
 
    // $path is an array of path segments.
    // Returns null if the path is not found.
@@ -111,10 +111,11 @@ class GoogleApi {
       $dirId = $driveId;
       $file = null;
       for ($i = 1; $i < count($path); $i++) {
-         $file = $this->findFileByName($path[$i], $dirId, $driveId);
+         $file = $this->findFileByName($path[$i], $dirId);
          if (!$file) {
             return null; }
-         $dirId = $file['id']; }
+         $isShortcut = Utils::isMimeTypeShortcut($file['mimeType']);
+         $dirId = $isShortcut ? $file['targetId'] : $file['id']; }
       return $file; }
 
    public function downloadDriveFile (string $fileId, ?string $range) : void {

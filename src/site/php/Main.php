@@ -105,13 +105,12 @@ class Main {
       $file = $googleApi->findPath($pathSegs);
       if (!$file) {
          throw new \Exception("Path \"$path\" not found."); }
-      $fileId = $file['id'];
-      $mimeType = $file['mimeType'];
+      $isShortcut = Utils::isMimeTypeShortcut($file['mimeType']);
+      $fileId = $isShortcut ? $file['targetId'] : $file['id'];
+      $mimeType = $isShortcut ? $file['targetMimeType'] : $file['mimeType'];
       if (Utils::isMimeTypeDirectory($mimeType)) {
          $this->generateDirectoryPage($path);              // fallback to directory page
          return; }
-      if (Utils::isMimeTypeRedirect($mimeType)) {
-         throw new \Exception('Google Drive redirect not yet implemented.'); }
       $range = isset($_SERVER['HTTP_RANGE']) ? $_SERVER['HTTP_RANGE'] : null; // TODO: Test
       if (Utils::isMimeTypeGoogleDoc($mimeType)) {
          $formatCode = Utils::getUrlParm('fmt', 'pdf');

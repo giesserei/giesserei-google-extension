@@ -57,26 +57,24 @@ export class GoogleDriveApi {
             return drive.id; }}
       return undefined; }
 
-   public async getDirectoryFiles (dirId: string, driveId: string) {
+   public async getDirectoryFiles (dirId: string) {
       const parms = {
          pageSize: "1000",
-         corpora: "drive",
-         driveId,
          q: `'${dirId}' in parents and trashed = false`,
-         fields: "files(id, name, mimeType, driveId, webViewLink, modifiedTime)",
+         fields: "files(id, name, mimeType, webViewLink, modifiedTime, shortcutDetails/targetId, shortcutDetails/targetMimeType)",
          orderBy: "folder, name_natural",
+         corpora: "allDrives",
          includeItemsFromAllDrives: "true",
          supportsAllDrives: "true" };
       const r = await this.fetchJson("files", parms);
       return r.files; }
 
    // Returns `undefined` if the file is not found.
-   public async findFileByName (fileName: string, dirId: string, driveId: string) {
+   public async findFileByName (fileName: string, dirId: string) {
       const parms = {
-         corpora: "drive",
-         driveId,
          q: `name = ${quoted(fileName)} and '${dirId}' in parents and trashed = false`,
-         fields: "files(id, name, mimeType, driveId, webViewLink)",
+         fields: "files(id, name, mimeType, webViewLink, shortcutDetails/targetId, shortcutDetails/targetMimeType)",
+         corpora: "allDrives",
          includeItemsFromAllDrives: "true",
          supportsAllDrives: "true" };
       const r = await this.fetchJson("files", parms);
@@ -97,15 +95,15 @@ export class GoogleDriveApi {
          return {
             id: driveId,                                   // root folder ID is drive ID
             name: driveName,
-            mimeType: "application/vnd.google-apps.folder",
-            driveId }; }
+            mimeType: "application/vnd.google-apps.folder"}; }
       let dirId = driveId;
       let file: any;
       for (let i = 1; i < path.length; i++) {
-         file = await this.findFileByName(path[i], dirId, driveId);
+         file = await this.findFileByName(path[i], dirId);
          if (!file) {
             return; }
-         dirId = file.id; }
+         const isShortcut = file.mimeType == "application/vnd.google-apps.shortcut";
+         dirId = isShortcut ? file.shortcutDetails.targetId : file.id; }
       return file; }
 
    //--- not used ---
@@ -113,7 +111,7 @@ export class GoogleDriveApi {
 // // Can also be used for folders.
 // public async getFileInfo (fileId: string) {
 //    const parms = {
-//       fields: "name, mimeType, driveId, webViewLink",
+//       fields: "name, mimeType, webViewLink",
 //       supportsAllDrives: "true" };
 //    return await this.fetchJson("files/" + fileId, parms); }
 
