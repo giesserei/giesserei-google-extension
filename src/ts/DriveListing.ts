@@ -176,20 +176,26 @@ function renderDirectoryList (dirPath: string, dirList: any[], isDriveList: bool
       dirListElement.appendChild(entryElement); }
    return dirListElement; }
 
-function renderDirectory (dirPath: string, dirList: any[], isDriveList: boolean) {
-   const dirListElement = renderDirectoryList(dirPath, dirList, isDriveList);
+// renderDirectory() is split into two parts to make it more responsive.
+function renderDirectory1 (dirPath: string) {
    const breadcrumbsElement = renderBreadcrumbs(dirPath);
-   contentElement.replaceChildren(breadcrumbsElement, dirListElement); }
+   contentElement.replaceChildren(breadcrumbsElement); }
+
+function renderDirectory2 (dirPath: string, dirList: any[], isDriveList: boolean) {
+   const dirListElement = renderDirectoryList(dirPath, dirList, isDriveList);
+   contentElement.appendChild(dirListElement); }
 
 async function listDirectoryWithId (dirId: string, dirPath: string) {
+   renderDirectory1(dirPath);
    const files = await driveApi.getDirectoryFiles(dirId);
-   renderDirectory(dirPath, files, false); }
+   renderDirectory2(dirPath, files, false); }
 
 async function listDirectory (path: string) {
    const pathSegs = Utils.splitPath(path);
    if (pathSegs.length == 0) {                             // root directory
+      renderDirectory1("");
       const drives = await driveApi.getSharedDrives();
-      renderDirectory("", drives, true); }
+      renderDirectory2("", drives, true); }
     else {
       const dir = await driveApi.findPath(pathSegs);
       if (!dir) {
