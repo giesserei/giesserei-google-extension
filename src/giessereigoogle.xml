@@ -19,11 +19,11 @@
    </files>
 
    <administration>
-      <menu link='index.php?option=com_giessereigoogle'>Giesserei/Google-Integration</menu>
+      <menu link='option=com_giessereigoogle'>Giesserei/Google-Integration</menu>
       <files folder="admin">
          <filename>index.html</filename>
          <filename>giessereigoogle.php</filename>
-         </files>
+      </files>
    </administration>
 
 </extension>

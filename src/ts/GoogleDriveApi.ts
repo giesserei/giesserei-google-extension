@@ -84,7 +84,23 @@ export class GoogleDriveApi {
 
    // `path` is an array of path segments.
    // Returns `undefined` if the path is not found.
-   public async findPath (path: string[]) {
+   private async findRelPath (baseDirId: string, path: string[]) {
+      if (!path.length) {
+         return; }
+      let dirId = baseDirId;
+      let file: any;
+      for (let i = 0; i < path.length; i++) {
+         file = await this.findFileByName(path[i], dirId);
+         if (!file) {
+            return; }
+         const isShortcut = file.mimeType == "application/vnd.google-apps.shortcut";
+         dirId = isShortcut ? file.shortcutDetails.targetId : file.id; }
+      return file; }
+
+   // `path` is an array of path segments.
+   // The first segment contains the drive name.
+   // Returns `undefined` if the path is not found.
+   private async findAbsPath (path: string[]) {
       if (!path.length) {
          return; }
       const driveName = path[0];
@@ -96,15 +112,16 @@ export class GoogleDriveApi {
             id: driveId,                                   // root folder ID is drive ID
             name: driveName,
             mimeType: "application/vnd.google-apps.folder"}; }
-      let dirId = driveId;
-      let file: any;
-      for (let i = 1; i < path.length; i++) {
-         file = await this.findFileByName(path[i], dirId);
-         if (!file) {
-            return; }
-         const isShortcut = file.mimeType == "application/vnd.google-apps.shortcut";
-         dirId = isShortcut ? file.shortcutDetails.targetId : file.id; }
-      return file; }
+      return await this.findRelPath(driveId, path.slice(1)); }
+
+   // `path` is an array of path segments.
+   // If baseDirId is '0', path is interpreted as an absolute path with path[0] being the drive name.
+   // Returns `undefined` if the path is not found.
+   public async findPath (baseDirId: string, path: string[]) {
+      if (baseDirId == '0') {
+         return await this.findAbsPath(path); }
+       else {
+         return await this.findRelPath(baseDirId, path); }}
 
    //--- not used ---
 

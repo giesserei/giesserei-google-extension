@@ -15,6 +15,9 @@ class Main {
    private string  $staticUrlBase;                         // URL base for static files
    private ?object $googleApi = null;
 
+   private string  $rootFolderId;
+   private string  $rootFolderDisplayName;
+
    public function __construct() {
       $this->readConfigFile();
       $this->cacheDir = $this->config['cacheDir'] ?? null;
@@ -60,16 +63,28 @@ class Main {
       return $this->googleApi; }
 
    public function processSiteRequest() : void {
-      $viewName = $this->getViewName();
+      $viewName = Utils::getViewName();
       switch ($viewName) {
          case 'drive': {
             $this->processDriveRequest();
+            break; }
+         case 'folder': {
+            $this->processFolderRequest();
             break; }
          default: {
             throw new \Exception("Unsupported view name \"$viewName\"-"); }}}
 
    private function processDriveRequest() : void {
+      $this->rootFolderId = '0';                                               // dummy ID for all shared drive folders
+      $this->processDirectoryOrFileRequest(); }
+
+   private function processFolderRequest() : void {
+      $this->rootFolderId = Utils::getUrlParm('rootFolderId', 'undefRootFolderId');
+      $this->processDirectoryOrFileRequest(); }
+
+   private function processDirectoryOrFileRequest() : void {
       $this->verifyUserIsLoggedIn();
+      $this->rootFolderDisplayName = Utils::getUrlParm('rootFolderDisplayName', 'undefRootFolderDisplayName');
       $path = Utils::getUrlPathParm();
       if (str_ends_with($path, '/')) {
          $this->generateDirectoryPage($path); }
@@ -84,8 +99,9 @@ class Main {
       $jsParms = [
          'view' => 'driveListing',
          'path' => $path,
-         'rootFolderDisplayName' => $this->config['rootFolderDisplayName'],
-         'driveUrlBase' => $this->config['driveUrlBase'],
+         'rootFolderId' => $this->rootFolderId,
+         'rootFolderDisplayName' => $this->rootFolderDisplayName,
+         'driveUrlBase' => Utils::getUrlBasePath(),
          'staticUrlBase' => $this->staticUrlBase,
          'googleAccessToken' => $accessToken,
          'googleAccessTokenSecs' => $remainingSecs ];
@@ -102,14 +118,14 @@ class Main {
    private function downloadFile (string $path) : void {
       $googleApi = $this->getGoogleApi();
       $pathSegs =& Utils::splitPath($path);
-      $file = $googleApi->findPath($pathSegs);
+      $file = $googleApi->findPath($this->rootFolderId, $pathSegs);
       if (!$file) {
          throw new \Exception("Path \"$path\" not found."); }
       $isShortcut = Utils::isMimeTypeShortcut($file['mimeType']);
       $fileId = $isShortcut ? $file['targetId'] : $file['id'];
       $mimeType = $isShortcut ? $file['targetMimeType'] : $file['mimeType'];
       if (Utils::isMimeTypeDirectory($mimeType)) {
-         $this->generateDirectoryPage($path);              // fallback to directory page
+         $this->generateDirectoryPage($path);                                  // fallback to directory page
          return; }
       $range = isset($_SERVER['HTTP_RANGE']) ? $_SERVER['HTTP_RANGE'] : null; // TODO: Test
       if (Utils::isMimeTypeGoogleDoc($mimeType)) {
@@ -125,14 +141,5 @@ class Main {
       $user = \JFactory::getUser();
       if ($user->guest) {
          throw new \Exception('Joomla user is not logged in.'); }}
-
-   private function getViewName() : ?string {
-      $inputView = Utils::getUrlParm('view');              // is undefined with SEF and additional URL segments
-      $app = \JFactory::getApplication();
-      $sitemenu = $app->getMenu();
-      $activeMenuItem = $sitemenu->getActive();            // may be null
-      $menuView = $activeMenuItem?->query['view'];
-      $viewName = $inputView ?? $menuView;
-      return $viewName; }
 
    }

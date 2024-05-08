@@ -190,14 +190,20 @@ async function listDirectoryWithId (dirId: string, dirPath: string) {
    const files = await driveApi.getDirectoryFiles(dirId);
    renderDirectory2(dirPath, files, false); }
 
+async function listSharedDrives() {
+   renderDirectory1("");
+   const drives = await driveApi.getSharedDrives();
+   renderDirectory2("", drives, true); }
+
 async function listDirectory (path: string) {
    const pathSegs = Utils.splitPath(path);
    if (pathSegs.length == 0) {                             // root directory
-      renderDirectory1("");
-      const drives = await driveApi.getSharedDrives();
-      renderDirectory2("", drives, true); }
+      if (jsParms.rootFolderId == "0") {
+         await listSharedDrives(); }
+       else {
+         await listDirectoryWithId(jsParms.rootFolderId, ""); }}
     else {
-      const dir = await driveApi.findPath(pathSegs);
+      const dir = await driveApi.findPath(jsParms.rootFolderId, pathSegs);
       if (!dir) {
          throw new Error(`Directory "${path}" not found.`); }
       const isShortcut = dir.mimeType == "application/vnd.google-apps.shortcut";

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <metadata>
-   <layout title="Google Drive"></layout>
+   <layout title="Google Drive Folder"></layout>
    <fields name="request">
       <fieldset name="request">
+         <field name="rootFolderId" type="text" required="true" label="Root folder ID" description="The google drive ID of the folder to be used as the root of the directory tree."/>
          <field name="rootFolderDisplayName" type="text" required="true" label="Root folder name" description="The name to be displayed for the root folder."/>
       </fieldset>
    </fields>

@@ -97,7 +97,21 @@ class GoogleApi {
 
    // $path is an array of path segments.
    // Returns null if the path is not found.
-   public function findPath (array &$path) : ?array {
+   private function findRelPath (string $baseDirId, array &$path) : ?array {
+      $dirId = $baseDirId;
+      $file = null;
+      for ($i = 0; $i < count($path); $i++) {
+         $file = $this->findFileByName($path[$i], $dirId);
+         if (!$file) {
+            return null; }
+         $isShortcut = Utils::isMimeTypeShortcut($file['mimeType']);
+         $dirId = $isShortcut ? $file['targetId'] : $file['id']; }
+      return $file; }
+
+   // $path is an array of path segments.
+   // The first segment contains the drive name.
+   // Returns null if the path is not found.
+   private function findAbsPath (array &$path) : ?array {
       if (!$path) {
          return null; }
       $driveName = $path[0];
@@ -108,15 +122,16 @@ class GoogleApi {
          return [
             'id'       => $driveId,                        // root folder ID is drive ID
             'mimeType' => 'application/vnd.google-apps.folder' ]; }
-      $dirId = $driveId;
-      $file = null;
-      for ($i = 1; $i < count($path); $i++) {
-         $file = $this->findFileByName($path[$i], $dirId);
-         if (!$file) {
-            return null; }
-         $isShortcut = Utils::isMimeTypeShortcut($file['mimeType']);
-         $dirId = $isShortcut ? $file['targetId'] : $file['id']; }
-      return $file; }
+      return $this->findRelPath($driveId, array_slice($path, 1)); }
+
+   // $path is an array of path segments.
+   // If $baseDirId is '0', $path is interpreted as an absolute path with path[0] being the drive name.
+   // Returns null if the path is not found.
+   public function findPath (string $baseDirId, array &$path) : ?array {
+      if ($baseDirId == '0') {
+         return $this->findAbsPath($path); }
+       else {
+         return $this->findRelPath($baseDirId, $path); }}
 
    public function downloadDriveFile (string $fileId, ?string $range) : void {
       $parms = [

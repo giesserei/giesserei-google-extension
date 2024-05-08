@@ -6,10 +6,19 @@ class Utils {
 
    public static function getUrlParm (string $parmName, mixed $defaultValue = null, string $filter = 'STRING') : mixed {
       $app = \JFactory::getApplication();
-      $input = $app->input;
+      $input = $app->input;                                // change to getInput() for Joomla 4
       return $input->get($parmName, $defaultValue, $filter); }
 
-   // Returns the path parameter without a leading '/'.
+   public static function getViewName() : ?string {
+      $inputView = self::getUrlParm('view');              // is undefined with SEF and additional URL segments
+      $app = \JFactory::getApplication();
+      $sitemenu = $app->getMenu();
+      $activeMenuItem = $sitemenu->getActive();           // may be null
+      $menuView = $activeMenuItem?->query['view'];
+      $viewName = $inputView ?? $menuView;
+      return $viewName; }
+
+   // Returns the path parameter from the URL without a leading '/'.
    public static function getUrlPathParm() : string {
       $app = \JFactory::getApplication();
       $sitemenu = $app->getMenu();
@@ -33,6 +42,15 @@ class Utils {
       while (strlen($s) > 1 && $s[0] == '/') {
          $s = substr($s, 1); }
       return $s ?: '/'; }
+
+   // Returns the base URL path matching the current menu item.
+   public static function getUrlBasePath() : string {
+      $app = \JFactory::getApplication();
+      $sitemenu = $app->getMenu();
+      $activeMenuItem = $sitemenu->getActive();
+      if (!$activeMenuItem) {
+         return '/unknownBasePath'; }
+      return '/' . $activeMenuItem->route; }
 
    private static function decodePathSegment (string $s) : string {
       // Special enoding for slash, because Apache does not allow "%2F" in the URL.
