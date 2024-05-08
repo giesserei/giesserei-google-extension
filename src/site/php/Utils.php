@@ -50,7 +50,7 @@ class Utils {
       $activeMenuItem = $sitemenu->getActive();
       if (!$activeMenuItem) {
          return '/unknownBasePath'; }
-      return '/' . $activeMenuItem->route; }
+      return \JUri::root(true) . '/' . $activeMenuItem->route; }
 
    private static function decodePathSegment (string $s) : string {
       // Special enoding for slash, because Apache does not allow "%2F" in the URL.
