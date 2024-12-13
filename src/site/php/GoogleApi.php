@@ -97,7 +97,7 @@ class GoogleApi {
 
    // $path is an array of path segments.
    // Returns null if the path is not found.
-   private function findRelPath (string $baseDirId, array &$path) : ?array {
+   private function findRelPath (string $baseDirId, array $path) : ?array {
       $dirId = $baseDirId;
       $file = null;
       for ($i = 0; $i < count($path); $i++) {
@@ -111,7 +111,7 @@ class GoogleApi {
    // $path is an array of path segments.
    // The first segment contains the drive name.
    // Returns null if the path is not found.
-   private function findAbsPath (array &$path) : ?array {
+   private function findAbsPath (array $path) : ?array {
       if (!$path) {
          return null; }
       $driveName = $path[0];
@@ -127,7 +127,7 @@ class GoogleApi {
    // $path is an array of path segments.
    // If $baseDirId is '0', $path is interpreted as an absolute path with path[0] being the drive name.
    // Returns null if the path is not found.
-   public function findPath (string $baseDirId, array &$path) : ?array {
+   public function findPath (string $baseDirId, array $path) : ?array {
       if ($baseDirId == '0') {
          return $this->findAbsPath($path); }
        else {
